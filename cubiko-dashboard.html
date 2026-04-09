@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cubiko Doctor Performance Dashboard</title>
+    <style>
+        :root {
+            --navy:      #1e3a5f;
+            --navy-mid:  #2d5986;
+            --blue:      #3b82f6;
+            --bg:        #f0f4f8;
+            --white:     #ffffff;
+            --text:      #1e293b;
+            --muted:     #64748b;
+            --border:    #e2e8f0;
+            --red:       #ef4444;
+            --red-bg:    #fef2f2;
+            --red-hover: #fee2e2;
+            --green:     #16a34a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* ── Print ── */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; font-size: 11px; }
+            .card { box-shadow: none !important; border: 1px solid #ddd; break-inside: avoid; margin-bottom: 12px; }
+            .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .summary-strip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .cell-input { border: none !important; background: transparent !important; padding: 3px 6px !important; }
+            tr.has-discrepancy td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .main { padding: 12px 16px; }
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+            color: white;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .header-brand .tagline {
+            font-size: 11px;
+            opacity: 0.65;
+            margin-top: 2px;
+        }
+
+        .header-doctor {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .h-input {
+            background: rgba(255,255,255,0.13);
+            border: 1px solid rgba(255,255,255,0.28);
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: white;
+            font-family: inherit;
+            outline: none;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .h-input::placeholder { color: rgba(255,255,255,0.42); }
+        .h-input:focus { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.65); }
+
+        #doctorName { font-size: 18px; font-weight: 600; width: 290px; }
+
+        .date-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .date-row .h-input { font-size: 12px; width: 134px; padding: 4px 10px; }
+
+        /* ── Controls Bar ── */
+        .controls-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 32px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        .ctrl-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #doctorSelect {
+            height: 34px;
+            padding: 0 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            background: white;
+            cursor: pointer;
+            min-width: 220px;
+            outline: none;
+        }
+
+        #doctorSelect:focus { border-color: var(--blue); }
+
+        .btn {
+            height: 34px;
+            padding: 0 14px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.14s, border-color 0.14s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .btn-navy  { background: var(--navy); color: white; }
+        .btn-navy:hover { background: var(--navy-mid); }
+        .btn-green { background: var(--green); color: white; }
+        .btn-green:hover { background: #15803d; }
+        .btn-red   { background: var(--red); color: white; }
+        .btn-red:hover { background: #dc2626; }
+        .btn-ghost { background: white; color: var(--text); border-color: var(--border); }
+        .btn-ghost:hover { background: var(--bg); }
+        .btn-teal  { background: #0891b2; color: white; }
+        .btn-teal:hover { background: #0e7490; }
+
+        .flex-gap { flex: 1; }
+
+        /* ── Main layout ── */
+        .main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--navy);
+            color: white;
+            padding: 11px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Summary strip ── */
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .stat {
+            padding: 18px 20px;
+            border-right: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat:last-child { border-right: none; }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1;
+        }
+
+        /* ── Tables ── */
+        .table-wrap { overflow-x: auto; }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        thead th {
+            background: #f8fafc;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 9px 14px;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 4px 6px 4px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: #f8fafc; }
+
+        tfoot td {
+            padding: 9px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--navy);
+            background: #eef2f7;
+            border-top: 2px solid var(--border);
+        }
+
+        /* ── Editable cells ── */
+        .cell-input {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            padding: 5px 8px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            background: transparent;
+            outline: none;
+            transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+        }
+
+        .cell-input:hover { background: #f0f4f8; border-color: var(--border); }
+
+        .cell-input:focus {
+            background: white;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+        }
+
+        .cell-input.auto-calc {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .cell-input.auto-calc:hover,
+        .cell-input.auto-calc:focus {
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
+            cursor: default;
+        }
+
+        /* ── Discrepancy row highlight ── */
+        tr.has-discrepancy td { background: var(--red-bg) !important; }
+        tr.has-discrepancy:hover td { background: var(--red-hover) !important; }
+
+        .diff-neg   { color: var(--red); font-weight: 700; }
+        .diff-pos   { color: #d97706;    font-weight: 700; }
+        .diff-zero  { color: var(--green); font-weight: 600; }
+        .diff-empty { color: #cbd5e1; }
+
+        /* ── Row add button ── */
+        .table-foot-bar {
+            padding: 9px 14px;
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-add-row {
+            height: 28px;
+            padding: 0 12px;
+            border-radius: 5px;
+            border: 1px dashed var(--border);
+            background: white;
+            color: var(--muted);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.12s, color 0.12s, background 0.12s;
+        }
+
+        .btn-add-row:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+
+        /* ── Delete row button ── */
+        .btn-del-row {
+            width: 22px; height: 22px;
+            border-radius: 4px;
+            border: none;
+            background: #fee2e2;
+            color: var(--red);
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.12s;
+        }
+
+        .btn-del-row:hover { background: #fecaca; }
+
+        /* ── Invalid time input ── */
+        .cell-input.invalid {
+            border-color: var(--red) !important;
+            background: #fff5f5 !important;
+            color: var(--red) !important;
+        }
+
+        /* ── Medicare grouped sections ── */
+        .med-group { border-bottom: 1px solid var(--border); }
+        .med-group:last-child { border-bottom: none; }
+
+        .med-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 20px;
+            background: #eef2f7;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .med-group-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .med-rate-badge {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2px 10px;
+        }
+
+        .med-subtotal { font-size: 13px; font-weight: 700; }
+
+        .med-grand-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: #eef2f7;
+            border-top: 2px solid var(--border);
+        }
+
+        .med-grand-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--navy);
+        }
+
+        #medGrandTotal { font-size: 15px; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 24px;
+            background: #1e293b;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.22s, transform 0.22s;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast.show { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+    <div class="header-brand">
+        <h1>Cubiko Performance Dashboard</h1>
+        <div class="tagline">Medical Practice &mdash; Doctor Report</div>
+    </div>
+    <div class="header-doctor">
+        <input id="doctorName" class="h-input" type="text" placeholder="Dr. First Last" autocomplete="off" />
+        <div class="date-row">
+            <span>Report period:</span>
+            <input id="dateFrom" class="h-input" type="text" placeholder="01 Jan 2025" />
+            <span>to</span>
+            <input id="dateTo"   class="h-input" type="text" placeholder="31 Dec 2025" />
+        </div>
+    </div>
+</header>
+
+<!-- ═══ CONTROLS BAR ═══ -->
+<div class="controls-bar no-print">
+    <span class="ctrl-label">Doctor:</span>
+    <select id="doctorSelect" onchange="loadDoctor(this.value)">
+        <option value="">&#8212; New Report &#8212;</option>
+    </select>
+    <button class="btn btn-green"  onclick="saveDoctor()">&#128190; Save</button>
+    <button class="btn btn-ghost"  onclick="confirmNew()">+ New</button>
+    <button class="btn btn-red"    id="deleteBtn" onclick="deleteDoctor()" style="display:none;">&#128465; Delete</button>
+    <div class="flex-gap"></div>
+    <button class="btn btn-teal"   onclick="window.print()">&#128438; Print Report</button>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+    <!-- Summary -->
+    <div class="card">
+        <div class="card-header">&#128202; Summary</div>
+        <div class="summary-strip">
+            <div class="stat">
+                <div class="stat-label">Total Billings</div>
+                <div class="stat-value" id="sumBillings">$&#8212;</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Total Hours Worked</div>
+                <div class="stat-value" id="sumHours">&#8212;</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Avg Hourly Rate</div>
+                <div class="stat-value" id="sumRate">$&#8212;</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Appt Discrepancy</div>
+                <div class="stat-value" id="sumDisc" style="color:var(--muted)">&#8212;</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billing & Hours -->
+    <div class="card">
+        <div class="card-header">&#128176; Billing &amp; Hours Summary</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:160px;">Month</th>
+                        <th>Total Billings ($)</th>
+                        <th>Hours Worked</th>
+                        <th>Hourly Rate (auto)</th>
+                        <th class="no-print" style="width:38px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="billingBody"></tbody>
+                <tfoot>
+                    <tr>
+                        <td>Total / Average</td>
+                        <td id="ftBillings">&#8212;</td>
+                        <td id="ftHours">&#8212;</td>
+                        <td id="ftRate">&#8212;</td>
+                        <td class="no-print"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="table-foot-bar no-print">
+            <button class="btn-add-row" onclick="addBillingRow()">+ Add month</button>
+        </div>
+    </div>
+
+    <!-- Appointment Discrepancy -->
+    <div class="card">
+        <div class="card-header">&#128336; Appointment Duration Discrepancy</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:160px;">Month / Period</th>
+                        <th>Actual Avg Duration (min)</th>
+                        <th>Booked Avg Duration (min)</th>
+                        <th>Difference</th>
+                        <th>Notes</th>
+                        <th class="no-print" style="width:38px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="apptBody"></tbody>
+            </table>
+        </div>
+        <div class="table-foot-bar no-print">
+            <button class="btn-add-row" onclick="addApptRow()">+ Add row</button>
+        </div>
+    </div>
+
+    <!-- Medicare Item Billing -->
+    <div class="card">
+        <div class="card-header">&#128203; Medicare Item Billing Discrepancy</div>
+        <div id="medGroups"></div>
+        <div class="med-grand-bar">
+            <span class="med-grand-label">Grand Total Discrepancy</span>
+            <span id="medGrandTotal"><span style="color:var(--muted)">&mdash;</span></span>
+        </div>
+    </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+const MEDICARE_RATES = { '3': 74, '23': 115, '36': 209, '44': 311 };
+
+const MONTHS = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+];
+const STORE = 'cubiko_doctors';
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let currentId = null;
+
+// ── Bootstrap ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    buildMedGroups();
+    refreshDropdown();
+    loadBlankReport();
+});
+
+// ── Default data ───────────────────────────────────────────────────────────────
+const defaultBillingRows = () => MONTHS.map(m => ({ month: m, billings: '', hours: '' }));
+const defaultApptRows    = () => MONTHS.map(m => ({ period: m, actual: '', booked: '', notes: '' }));
+
+// ── Billing table ──────────────────────────────────────────────────────────────
+function renderBillingTable(rows) {
+    const tbody = document.getElementById('billingBody');
+    tbody.innerHTML = '';
+    rows.forEach(r => tbody.appendChild(makeBillingRow(r)));
+    recalcSummary();
+}
+
+function makeBillingRow(data = {}) {
+    const tr = document.createElement('tr');
+    const bill  = data.billings ?? '';
+    const hours = data.hours    ?? '';
+    const rate  = autoRate(bill, hours);
+
+    tr.innerHTML = `
+        <td><input class="cell-input" value="${x(data.month ?? '')}" placeholder="e.g. January" /></td>
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(bill)}"  placeholder="0.00" /></td>
+        <td><input class="cell-input hms-input"  type="text"         value="${x(hours)}" placeholder="hh:mm:ss" /></td>
+        <td><input class="cell-input auto-calc"   type="text"         value="${x(rate)}"  placeholder="auto" readonly tabindex="-1" /></td>
+        <td class="no-print" style="text-align:center;">
+            <button class="btn-del-row" onclick="removeRow(this)" title="Remove row">&#10005;</button>
+        </td>`;
+
+    const [, billIn, hoursIn, rateIn] = tr.querySelectorAll('.cell-input');
+    const refresh = () => {
+        validateHMS(hoursIn);
+        rateIn.value = autoRate(billIn.value, hoursIn.value);
+        recalcSummary();
+    };
+    billIn.addEventListener('input', refresh);
+    hoursIn.addEventListener('input', refresh);
+    hoursIn.addEventListener('blur', () => validateHMS(hoursIn));
+    return tr;
+}
+
+function addBillingRow(data) {
+    document.getElementById('billingBody').appendChild(makeBillingRow(data));
+    recalcSummary();
+}
+
+// ── Appointment table ──────────────────────────────────────────────────────────
+function renderApptTable(rows) {
+    const tbody = document.getElementById('apptBody');
+    tbody.innerHTML = '';
+    rows.forEach(r => tbody.appendChild(makeApptRow(r)));
+    recalcSummary();
+}
+
+function makeApptRow(data = {}) {
+    const tr   = document.createElement('tr');
+    const act  = data.actual ?? '';
+    const bkd  = data.booked ?? '';
+    const diff = diffVal(act, bkd);
+
+    if (diff !== null && diff !== 0) tr.classList.add('has-discrepancy');
+
+    tr.innerHTML = `
+        <td><input class="cell-input" value="${x(data.period ?? '')}" placeholder="e.g. January" /></td>
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(act)}" placeholder="0" /></td>
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(bkd)}" placeholder="0" /></td>
+        <td class="diff-cell">${renderDiff(diff)}</td>
+        <td><input class="cell-input" value="${x(data.notes ?? '')}" placeholder="Optional notes&#8230;" /></td>
+        <td class="no-print" style="text-align:center;">
+            <button class="btn-del-row" onclick="removeRow(this)" title="Remove row">&#10005;</button>
+        </td>`;
+
+    const inputs = tr.querySelectorAll('.cell-input');
+    const actualIn = inputs[1], bookedIn = inputs[2];
+
+    const refresh = () => {
+        const d = diffVal(actualIn.value, bookedIn.value);
+        tr.classList.toggle('has-discrepancy', d !== null && d !== 0);
+        tr.querySelector('.diff-cell').innerHTML = renderDiff(d);
+        recalcSummary();
+    };
+
+    actualIn.addEventListener('input', refresh);
+    bookedIn.addEventListener('input', refresh);
+    return tr;
+}
+
+function addApptRow(data) {
+    document.getElementById('apptBody').appendChild(makeApptRow(data));
+    recalcSummary();
+}
+
+// ── Medicare grouped table ─────────────────────────────────────────────────────
+const defaultMedRows = () =>
+    Object.fromEntries(Object.keys(MEDICARE_RATES).map(item => [item, [{}, {}]]));
+
+// Build the static group structure (called once on DOMContentLoaded)
+function buildMedGroups() {
+    const container = document.getElementById('medGroups');
+    container.innerHTML = '';
+    Object.entries(MEDICARE_RATES).forEach(([item, rate]) => {
+        const div = document.createElement('div');
+        div.className = 'med-group';
+        div.dataset.item = item;
+        div.innerHTML = `
+            <div class="med-group-header">
+                <div class="med-group-title">
+                    Item ${item}
+                    <span class="med-rate-badge">Schedule fee: $${rate}.00</span>
+                </div>
+                <div class="med-subtotal" id="medSub_${item}"><span style="color:var(--muted)">&mdash;</span></div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Actual Duration (min)</th>
+                            <th>Booked Duration (min)</th>
+                            <th style="width:140px;">Correct Rate ($)</th>
+                            <th>Actual Charged ($)</th>
+                            <th style="width:160px;">Difference</th>
+                            <th class="no-print" style="width:38px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="medBody_${item}"></tbody>
+                </table>
+            </div>
+            <div class="table-foot-bar no-print" style="display:flex; gap:6px;">
+                <button class="btn-add-row" onclick="addMedInstanceRows('${item}', 1)">+ Add 1</button>
+                <button class="btn-add-row" onclick="addMedInstanceRows('${item}', 5)">+ Add 5</button>
+                <button class="btn-add-row" onclick="addMedInstanceRows('${item}', 10)">+ Add 10</button>
+            </div>`;
+        container.appendChild(div);
+    });
+}
+
+function renderMedTable(data) {
+    Object.keys(MEDICARE_RATES).forEach(item => {
+        const tbody = document.getElementById(`medBody_${item}`);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        (data[item] || []).forEach(r => tbody.appendChild(makeMedInstanceRow(item, r)));
+        recalcMedItem(item);
+    });
+}
+
+function makeMedInstanceRow(item, data = {}) {
+    const rate    = MEDICARE_RATES[item] ?? 0;
+    const correct = data.correct ?? String(rate);
+    const actual  = data.actual  ?? '';
+    const actDur  = data.actDur  ?? '';
+    const bkdDur  = data.bkdDur  ?? '';
+    const diff    = medDiff(correct, actual);
+
+    const tr = document.createElement('tr');
+    if (diff !== null && diff !== 0) tr.classList.add('has-discrepancy');
+
+    tr.innerHTML = `
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(actDur)}" placeholder="0" /></td>
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(bkdDur)}" placeholder="0" /></td>
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(correct)}" placeholder="0.00" /></td>
+        <td><input class="cell-input" type="text" inputmode="decimal" value="${x(actual)}"  placeholder="0.00" /></td>
+        <td class="med-diff-cell">${renderMedDiff(diff)}</td>
+        <td class="no-print" style="text-align:center;">
+            <button class="btn-del-row" onclick="removeMedInstanceRow(this,'${item}')" title="Remove">&#10005;</button>
+        </td>`;
+
+    // ins: [0]=actDur, [1]=bkdDur, [2]=correct, [3]=actual
+    const [, , correctIn, actualIn] = tr.querySelectorAll('.cell-input');
+    const refresh = () => {
+        const d = medDiff(correctIn.value, actualIn.value);
+        tr.classList.toggle('has-discrepancy', d !== null && d !== 0);
+        tr.querySelector('.med-diff-cell').innerHTML = renderMedDiff(d);
+        recalcMedItem(item);
+    };
+    correctIn.addEventListener('input', refresh);
+    actualIn.addEventListener('input',  refresh);
+
+    return tr;
+}
+
+function addMedInstanceRow(item, data) {
+    document.getElementById(`medBody_${item}`).appendChild(makeMedInstanceRow(item, data));
+    recalcMedItem(item);
+}
+
+function addMedInstanceRows(item, count) {
+    const tbody = document.getElementById(`medBody_${item}`);
+    for (let i = 0; i < count; i++) tbody.appendChild(makeMedInstanceRow(item));
+    recalcMedItem(item);
+}
+
+function removeMedInstanceRow(btn, item) {
+    btn.closest('tr').remove();
+    recalcMedItem(item);
+}
+
+function recalcMedItem(item) {
+    let total = 0, hasData = false;
+    document.querySelectorAll(`#medBody_${item} tr`).forEach(tr => {
+        const ins  = tr.querySelectorAll('.cell-input');
+        // ins: [0]=actDur, [1]=bkdDur, [2]=correct, [3]=actual
+        const diff = medDiff(ins[2]?.value, ins[3]?.value);
+        if (diff !== null) { total += diff; hasData = true; }
+    });
+
+    const el = document.getElementById(`medSub_${item}`);
+    if (!hasData) {
+        el.innerHTML = '<span style="color:var(--muted)">\u2014</span>';
+    } else if (total === 0) {
+        el.innerHTML = '<span class="diff-zero">\u2713 $0.00</span>';
+    } else {
+        const cls  = total < 0 ? 'diff-neg' : 'diff-pos';
+        const sign = total < 0 ? '\u2212' : '+';
+        el.innerHTML = `<span class="${cls}">${sign}${fmtCurr(Math.abs(total))}</span>`;
+    }
+    recalcMedGrandTotal();
+}
+
+function recalcMedGrandTotal() {
+    let grand = 0, hasData = false;
+    Object.keys(MEDICARE_RATES).forEach(item => {
+        document.querySelectorAll(`#medBody_${item} tr`).forEach(tr => {
+            const ins  = tr.querySelectorAll('.cell-input');
+            const diff = medDiff(ins[2]?.value, ins[3]?.value);
+            if (diff !== null) { grand += diff; hasData = true; }
+        });
+    });
+
+    const el = document.getElementById('medGrandTotal');
+    if (!hasData) {
+        el.innerHTML = '<span style="color:var(--muted)">\u2014</span>';
+    } else if (grand === 0) {
+        el.innerHTML = '<span class="diff-zero" style="font-weight:700">\u2713 $0.00</span>';
+    } else {
+        const cls   = grand < 0 ? 'diff-neg' : 'diff-pos';
+        const sign  = grand < 0 ? '\u2212' : '+';
+        const label = grand < 0 ? ' under-billed' : ' over-billed';
+        el.innerHTML = `<span class="${cls}" style="font-weight:700">${sign}${fmtCurr(Math.abs(grand))}${label}</span>`;
+    }
+}
+
+function medDiff(correct, actual) {
+    const c = parseFloat(String(correct || '').replace(/[$,]/g, ''));
+    const a = parseFloat(String(actual  || '').replace(/[$,]/g, ''));
+    if (isNaN(c) || isNaN(a)) return null;
+    return parseFloat((a - c).toFixed(2));
+}
+
+function renderMedDiff(d) {
+    if (d === null) return '<span class="diff-empty">\u2014</span>';
+    if (d === 0)    return '<span class="diff-zero">\u2713 $0.00</span>';
+    const cls  = d < 0 ? 'diff-neg' : 'diff-pos';
+    const sign = d < 0 ? '\u2212' : '+';
+    return `<span class="${cls}">${sign}${fmtCurr(Math.abs(d))}</span>`;
+}
+
+// ── Shared row helpers ─────────────────────────────────────────────────────────
+function removeRow(btn) {
+    btn.closest('tr').remove();
+    recalcSummary();
+}
+
+// Parse hh:mm:ss or hh:mm → decimal hours. Returns NaN for non-empty invalid input.
+function parseHMS(val) {
+    const s = (val || '').trim();
+    if (!s) return 0;
+    const m = s.match(/^(\d+):([0-5]\d)(?::([0-5]\d))?$/);
+    if (!m) return NaN;
+    return parseInt(m[1], 10) + parseInt(m[2], 10) / 60 + (m[3] ? parseInt(m[3], 10) / 3600 : 0);
+}
+
+// Decimal hours → "hh:mm" string for display
+function decimalToHM(h) {
+    const totalMin = Math.round(h * 60);
+    const hh = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    return hh + ':' + String(mm).padStart(2, '0');
+}
+
+// Mark an hms input valid/invalid based on its current value
+function validateHMS(input) {
+    const v = input.value.trim();
+    const invalid = v !== '' && isNaN(parseHMS(v));
+    input.classList.toggle('invalid', invalid);
+    return !invalid;
+}
+
+function autoRate(bill, hours) {
+    const b = parseFloat(bill), h = parseHMS(hours);
+    return (b > 0 && h > 0 && !isNaN(h)) ? '$' + (b / h).toFixed(2) + '/hr' : '';
+}
+
+function diffVal(actual, booked) {
+    const a = parseFloat(actual), b = parseFloat(booked);
+    if (isNaN(a) || isNaN(b)) return null;
+    return parseFloat((a - b).toFixed(2));
+}
+
+function renderDiff(d) {
+    if (d === null)  return '<span class="diff-empty">&#8212;</span>';
+    if (d === 0)     return '<span class="diff-zero">&#10003; 0 min</span>';
+    const sign = d > 0 ? '+' : '';
+    const cls  = d > 0 ? 'diff-pos' : 'diff-neg';
+    return `<span class="${cls}">${sign}${d} min</span>`;
+}
+
+function x(s) {
+    // Escape for HTML attribute values
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+// ── Summary recalc ─────────────────────────────────────────────────────────────
+function recalcSummary() {
+    let totalBill = 0, totalHrs = 0;
+
+    document.querySelectorAll('#billingBody tr').forEach(tr => {
+        const ins = tr.querySelectorAll('.cell-input');
+        totalBill += parseFloat(ins[1]?.value) || 0;
+        const h = parseHMS(ins[2]?.value);
+        totalHrs  += (!isNaN(h) ? h : 0);
+    });
+
+    const avgRate = totalHrs > 0 ? totalBill / totalHrs : 0;
+    const hrsDisplay = totalHrs ? decimalToHM(totalHrs) : null;
+
+    // Footer
+    document.getElementById('ftBillings').textContent = totalBill ? fmtCurr(totalBill) : '\u2014';
+    document.getElementById('ftHours').textContent    = hrsDisplay ? hrsDisplay : '\u2014';
+    document.getElementById('ftRate').textContent     = avgRate    ? '$' + avgRate.toFixed(2) + '/hr' : '\u2014';
+
+    // Summary strip
+    document.getElementById('sumBillings').textContent = totalBill ? fmtCurr(totalBill) : '$\u2014';
+    document.getElementById('sumHours').textContent    = hrsDisplay ? hrsDisplay : '\u2014';
+    document.getElementById('sumRate').textContent     = avgRate    ? '$' + avgRate.toFixed(0) + '/hr' : '$\u2014';
+
+    // Discrepancy
+    let totalDisc = 0, hasDiscData = false;
+    document.querySelectorAll('#apptBody tr').forEach(tr => {
+        const ins = tr.querySelectorAll('.cell-input');
+        const d   = diffVal(ins[1]?.value, ins[2]?.value);
+        if (d !== null) { totalDisc += Math.abs(d); hasDiscData = true; }
+    });
+
+    const discEl = document.getElementById('sumDisc');
+    if (!hasDiscData) {
+        discEl.textContent  = '\u2014';
+        discEl.style.color  = 'var(--muted)';
+    } else if (totalDisc === 0) {
+        discEl.textContent  = '0 min \u2713';
+        discEl.style.color  = 'var(--green)';
+    } else {
+        discEl.textContent  = totalDisc.toFixed(0) + ' min';
+        discEl.style.color  = 'var(--red)';
+    }
+}
+
+function fmtCurr(n) {
+    return '$' + n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── Extract DOM data ───────────────────────────────────────────────────────────
+function extractData() {
+    const billing = [];
+    document.querySelectorAll('#billingBody tr').forEach(tr => {
+        const ins = tr.querySelectorAll('.cell-input');
+        billing.push({ month: ins[0]?.value || '', billings: ins[1]?.value || '', hours: ins[2]?.value || '' });
+    });
+
+    const appts = [];
+    document.querySelectorAll('#apptBody tr').forEach(tr => {
+        const ins = tr.querySelectorAll('.cell-input');
+        // ins: [0]=period, [1]=actual, [2]=booked, [3]=notes  (diff cell has no input)
+        appts.push({ period: ins[0]?.value || '', actual: ins[1]?.value || '', booked: ins[2]?.value || '', notes: ins[3]?.value || '' });
+    });
+
+    const medicare = {};
+    Object.keys(MEDICARE_RATES).forEach(item => {
+        medicare[item] = [];
+        document.querySelectorAll(`#medBody_${item} tr`).forEach(tr => {
+            const ins = tr.querySelectorAll('.cell-input');
+            // ins: [0]=actDur, [1]=bkdDur, [2]=correct, [3]=actual
+            medicare[item].push({
+                actDur:  ins[0]?.value || '',
+                bkdDur:  ins[1]?.value || '',
+                correct: ins[2]?.value || '',
+                actual:  ins[3]?.value || ''
+            });
+        });
+    });
+
+    return {
+        doctorName: document.getElementById('doctorName').value,
+        dateFrom:   document.getElementById('dateFrom').value,
+        dateTo:     document.getElementById('dateTo').value,
+        billing, appts, medicare,
+        savedAt: new Date().toISOString()
+    };
+}
+
+// ── Apply data to DOM ──────────────────────────────────────────────────────────
+function applyData(d) {
+    document.getElementById('doctorName').value = d.doctorName || '';
+    document.getElementById('dateFrom').value   = d.dateFrom   || '';
+    document.getElementById('dateTo').value     = d.dateTo     || '';
+    renderBillingTable(d.billing?.length ? d.billing : defaultBillingRows());
+    renderApptTable(d.appts?.length      ? d.appts   : defaultApptRows());
+    // Accept new object format; fall back to defaults if old array format or missing
+    const medData = (d.medicare && !Array.isArray(d.medicare)) ? d.medicare : defaultMedRows();
+    renderMedTable(medData);
+}
+
+function loadBlankReport() {
+    document.getElementById('doctorName').value = '';
+    document.getElementById('dateFrom').value   = '';
+    document.getElementById('dateTo').value     = '';
+    renderBillingTable(defaultBillingRows());
+    renderApptTable(defaultApptRows());
+    renderMedTable(defaultMedRows());
+}
+
+// ── localStorage ───────────────────────────────────────────────────────────────
+const getAll = ()    => JSON.parse(localStorage.getItem(STORE) || '{}');
+const setAll = data  => localStorage.setItem(STORE, JSON.stringify(data));
+
+// ── Save ───────────────────────────────────────────────────────────────────────
+function saveDoctor() {
+    const d    = extractData();
+    const name = d.doctorName.trim();
+    if (!name) { toast('Please enter a doctor name first.'); return; }
+
+    const all = getAll();
+    const id  = currentId || ('doc_' + Date.now());
+    all[id]   = d;
+    setAll(all);
+    currentId = id;
+
+    refreshDropdown();
+    document.getElementById('doctorSelect').value = id;
+    document.getElementById('deleteBtn').style.display = '';
+    toast('Saved: ' + name);
+}
+
+// ── Load ───────────────────────────────────────────────────────────────────────
+function loadDoctor(id) {
+    if (!id) { confirmNew(); return; }
+    const all = getAll();
+    if (!all[id]) return;
+    currentId = id;
+    applyData(all[id]);
+    document.getElementById('deleteBtn').style.display = '';
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────────
+function deleteDoctor() {
+    if (!currentId) return;
+    const all  = getAll();
+    const name = all[currentId]?.doctorName || 'this report';
+    if (!confirm('Delete the report for ' + name + '?\nThis cannot be undone.')) return;
+
+    delete all[currentId];
+    setAll(all);
+    currentId = null;
+
+    refreshDropdown();
+    document.getElementById('doctorSelect').value  = '';
+    document.getElementById('deleteBtn').style.display = 'none';
+    loadBlankReport();
+    toast('Report deleted.');
+}
+
+// ── New ────────────────────────────────────────────────────────────────────────
+function confirmNew() {
+    const name = document.getElementById('doctorName').value.trim();
+    if (name && !confirm('Start a new report? Unsaved changes will be lost.')) return;
+    currentId = null;
+    document.getElementById('doctorSelect').value      = '';
+    document.getElementById('deleteBtn').style.display = 'none';
+    loadBlankReport();
+}
+
+// ── Dropdown ───────────────────────────────────────────────────────────────────
+function refreshDropdown() {
+    const sel  = document.getElementById('doctorSelect');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">\u2014 New Report \u2014</option>';
+
+    Object.entries(getAll())
+        .sort(([, a], [, b]) => a.doctorName.localeCompare(b.doctorName))
+        .forEach(([id, d]) => {
+            const opt   = document.createElement('option');
+            opt.value   = id;
+            const saved = d.savedAt
+                ? new Date(d.savedAt).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })
+                : '';
+            opt.textContent = d.doctorName + (saved ? '  (' + saved + ')' : '');
+            sel.appendChild(opt);
+        });
+
+    if (currentId) sel.value = currentId;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
