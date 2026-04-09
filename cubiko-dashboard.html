@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cubiko Doctor Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --navy:      #1e3a5f;
@@ -568,10 +569,10 @@ const STORE = 'cubiko_doctors';
 let currentId = null;
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     buildMedGroups();
-    refreshDropdown();
     loadBlankReport();
+    await refreshDropdown();
 });
 
 // ── Default data ───────────────────────────────────────────────────────────────
@@ -993,51 +994,57 @@ function loadBlankReport() {
     renderMedTable(defaultMedRows());
 }
 
-// ── localStorage ───────────────────────────────────────────────────────────────
-const getAll = ()    => JSON.parse(localStorage.getItem(STORE) || '{}');
-const setAll = data  => localStorage.setItem(STORE, JSON.stringify(data));
+// ── Supabase ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://ioglucqixaviphpvampq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ2x1Y3FpeGF2aXBocHZhbXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzIxMDIsImV4cCI6MjA5MTI0ODEwMn0.Bto4yf6w2FN_is61aGfSoEHY0fouPngE5CVSC9NtFJw';
+const TABLE       = 'doctor_reports';
+const sb          = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── Save ───────────────────────────────────────────────────────────────────────
-function saveDoctor() {
+async function saveDoctor() {
     const d    = extractData();
     const name = d.doctorName.trim();
     if (!name) { toast('Please enter a doctor name first.'); return; }
 
-    const all = getAll();
     const id  = currentId || ('doc_' + Date.now());
-    all[id]   = d;
-    setAll(all);
-    currentId = id;
+    const row = { id, doctor_name: name, data: d, saved_at: new Date().toISOString() };
 
-    refreshDropdown();
-    document.getElementById('doctorSelect').value = id;
+    toast('Saving\u2026');
+    const { error } = await sb.from(TABLE).upsert(row, { onConflict: 'id' });
+
+    if (error) { toast('Save failed: ' + error.message); return; }
+
+    currentId = id;
+    await refreshDropdown();
+    document.getElementById('doctorSelect').value      = id;
     document.getElementById('deleteBtn').style.display = '';
     toast('Saved: ' + name);
 }
 
 // ── Load ───────────────────────────────────────────────────────────────────────
-function loadDoctor(id) {
+async function loadDoctor(id) {
     if (!id) { confirmNew(); return; }
-    const all = getAll();
-    if (!all[id]) return;
+
+    const { data, error } = await sb.from(TABLE).select('data').eq('id', id).single();
+    if (error || !data) { toast('Could not load report.'); return; }
+
     currentId = id;
-    applyData(all[id]);
+    applyData(data.data);
     document.getElementById('deleteBtn').style.display = '';
 }
 
 // ── Delete ─────────────────────────────────────────────────────────────────────
-function deleteDoctor() {
+async function deleteDoctor() {
     if (!currentId) return;
-    const all  = getAll();
-    const name = all[currentId]?.doctorName || 'this report';
+    const name = document.getElementById('doctorName').value.trim() || 'this report';
     if (!confirm('Delete the report for ' + name + '?\nThis cannot be undone.')) return;
 
-    delete all[currentId];
-    setAll(all);
-    currentId = null;
+    const { error } = await sb.from(TABLE).delete().eq('id', currentId);
+    if (error) { toast('Delete failed: ' + error.message); return; }
 
-    refreshDropdown();
-    document.getElementById('doctorSelect').value  = '';
+    currentId = null;
+    await refreshDropdown();
+    document.getElementById('doctorSelect').value      = '';
     document.getElementById('deleteBtn').style.display = 'none';
     loadBlankReport();
     toast('Report deleted.');
@@ -1054,22 +1061,25 @@ function confirmNew() {
 }
 
 // ── Dropdown ───────────────────────────────────────────────────────────────────
-function refreshDropdown() {
-    const sel  = document.getElementById('doctorSelect');
-    const prev = sel.value;
+async function refreshDropdown() {
+    const sel = document.getElementById('doctorSelect');
     sel.innerHTML = '<option value="">\u2014 New Report \u2014</option>';
 
-    Object.entries(getAll())
-        .sort(([, a], [, b]) => a.doctorName.localeCompare(b.doctorName))
-        .forEach(([id, d]) => {
+    const { data, error } = await sb.from(TABLE)
+        .select('id, doctor_name, saved_at')
+        .order('doctor_name', { ascending: true });
+
+    if (!error && data) {
+        data.forEach(row => {
             const opt   = document.createElement('option');
-            opt.value   = id;
-            const saved = d.savedAt
-                ? new Date(d.savedAt).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })
+            opt.value   = row.id;
+            const saved = row.saved_at
+                ? new Date(row.saved_at).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })
                 : '';
-            opt.textContent = d.doctorName + (saved ? '  (' + saved + ')' : '');
+            opt.textContent = row.doctor_name + (saved ? '  (' + saved + ')' : '');
             sel.appendChild(opt);
         });
+    }
 
     if (currentId) sel.value = currentId;
 }
