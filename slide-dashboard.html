@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SLIDE Dashboard — YourGP</title>
+  <style>
+    :root {
+      --bg-base: #f0eef8;
+      --bg-surface: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f7f5fb;
+      --border: #dcd6f0;
+      --border-subtle: #e8e4f5;
+      --accent: #7c6fcd;
+      --accent-dim: rgba(124, 111, 205, 0.12);
+      --text-primary: #2d2638;
+      --text-secondary: #7a7090;
+      --text-muted: #b5a99a;
+      --stage-on: #7bc4b8;
+      --stage-on-bg: rgba(123, 196, 184, 0.15);
+      --stage-on-border: rgba(123, 196, 184, 0.38);
+      --stage-in: #c49abd;
+      --stage-in-bg: rgba(196, 154, 189, 0.15);
+      --stage-in-border: rgba(196, 154, 189, 0.38);
+      --stage-off: #f5c842;
+      --stage-off-bg: rgba(245, 200, 66, 0.15);
+      --stage-off-border: rgba(245, 200, 66, 0.45);
+      --danger: #c94f4f;
+      --danger-bg: rgba(201, 79, 79, 0.07);
+      --danger-border: rgba(201, 79, 79, 0.22);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ─── Header ─────────────────────────────────────── */
+    header {
+      background: #07111f;
+      border-bottom: 1px solid #1c3355;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex: 1;
+    }
+
+    .brand-mark {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      padding: 0.3rem 0.65rem;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+    }
+
+    .brand-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .brand-titles h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #e8f0ff;
+    }
+
+    .brand-titles p {
+      font-size: 0.7rem;
+      color: #6d8fb0;
+      letter-spacing: 0.2px;
+    }
+
+    /* ─── Main Layout ─────────────────────────────────── */
+    main {
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ─── Summary Strip ──────────────────────────────── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 14px rgba(120, 100, 180, 0.08);
+    }
+
+    .stat-dot {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-dot svg { width: 20px; height: 20px; }
+
+    .stat-dot.total { background: rgba(124, 111, 205, 0.15); }
+    .stat-dot.onboarding { background: rgba(123, 196, 184, 0.2); }
+    .stat-dot.induction { background: rgba(196, 154, 189, 0.2); }
+    .stat-dot.offboarding { background: rgba(245, 200, 66, 0.22); }
+
+    .stat-dot.total svg { stroke: var(--accent); }
+    .stat-dot.onboarding svg { stroke: #4a9b8e; }
+    .stat-dot.induction svg { stroke: #9e6898; }
+    .stat-dot.offboarding svg { stroke: #b89000; }
+
+    .stat-body { line-height: 1.2; }
+
+    .stat-number {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-card.total .stat-number { color: var(--accent); }
+    .stat-card.onboarding .stat-number { color: #4a9b8e; }
+    .stat-card.induction .stat-number { color: #9e6898; }
+    .stat-card.offboarding .stat-number { color: #b89000; }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 500;
+    }
+
+    /* ─── Dashboard top bar ───────────────────────────── */
+    .dash-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .dash-topbar-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Buttons ─────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      line-height: 1;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover { background: #6959b8; }
+
+    .btn-ghost-edit {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: rgba(124, 111, 205, 0.28);
+      padding: 0.28rem 0.65rem;
+      font-size: 0.73rem;
+    }
+    .btn-ghost-edit:hover { background: rgba(124, 111, 205, 0.2); }
+
+    .btn-ghost-delete {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: var(--danger-border);
+      padding: 0.28rem 0.65rem;
+      font-size: 0.73rem;
+    }
+    .btn-ghost-delete:hover { background: rgba(201, 79, 79, 0.13); }
+
+    .btn-cancel {
+      background: transparent;
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+    .btn-cancel:hover { color: var(--text-primary); background: var(--bg-card-alt); }
+
+    /* ─── Modal ───────────────────────────────────────── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(180, 168, 210, 0.45);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 440px;
+      padding: 1.75rem;
+      box-shadow: 0 20px 60px rgba(100, 80, 160, 0.18);
+      animation: slideUp 0.18s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(16px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.4rem;
+    }
+
+    .modal-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0.2rem;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+
+    /* ─── Form ────────────────────────────────────────── */
+    .form-row { margin-bottom: 1rem; }
+
+    .form-row label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-row input,
+    .form-row select {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.8rem;
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      outline: none;
+      appearance: none;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+
+    .form-row input:focus,
+    .form-row select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(29, 114, 255, 0.15);
+    }
+
+    .form-row select option { background: #ffffff; color: #2d2638; }
+
+    .form-row input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: opacity(0.45);
+      cursor: pointer;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.6rem;
+      margin-top: 1.4rem;
+    }
+
+    /* ─── Remote toggle ──────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { display: none; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 100px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.15s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    }
+
+    .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px); }
+
+    .toggle-label {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .remote-badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      background: rgba(124, 111, 205, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(124, 111, 205, 0.28);
+      border-radius: 100px;
+      padding: 0.1rem 0.45rem;
+      margin-left: 0.45rem;
+      vertical-align: middle;
+    }
+
+    /* ─── Notes ──────────────────────────────────────── */
+    .notes-section {
+      margin-top: 0.75rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .notes-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.12s;
+    }
+
+    .notes-toggle:hover { color: var(--accent); }
+
+    .notes-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .notes-body {
+      display: none;
+      margin-top: 0.55rem;
+    }
+
+    .notes-body.open { display: block; }
+
+    .notes-textarea {
+      width: 100%;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.65rem;
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: vertical;
+      min-height: 64px;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+
+    .notes-textarea:focus { border-color: var(--accent); }
+    .notes-textarea::placeholder { color: var(--text-muted); }
+
+    /* ─── Role Sections ──────────────────────────────── */
+    .role-section { margin-bottom: 2.25rem; }
+
+    .role-heading {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.25rem;
+    }
+
+    .role-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(181, 169, 154, 0.15);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .role-icon svg { width: 16px; height: 16px; stroke: #b5a99a; }
+
+    .role-heading h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      flex: 1;
+      color: #b5a99a;
+    }
+
+    .role-pill {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #b5a99a;
+      background: rgba(181, 169, 154, 0.1);
+      border: 1px solid rgba(181, 169, 154, 0.28);
+      border-radius: 100px;
+      padding: 0.15rem 0.6rem;
+    }
+
+    /* ─── Stage Subsection ────────────────────────────── */
+    .stage-group { margin-bottom: 1.25rem; }
+
+    .stage-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      border-radius: 100px;
+      padding: 0.22rem 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .stage-chip::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .stage-chip.Onboarding {
+      color: #3d8f83;
+      background: var(--stage-on-bg);
+      border: 1px solid var(--stage-on-border);
+    }
+    .stage-chip.Onboarding::before { background: var(--stage-on); }
+
+    .stage-chip.Induction {
+      color: #8e5e8a;
+      background: var(--stage-in-bg);
+      border: 1px solid var(--stage-in-border);
+    }
+    .stage-chip.Induction::before { background: var(--stage-in); }
+
+    .stage-chip.Offboarding {
+      color: #a07800;
+      background: var(--stage-off-bg);
+      border: 1px solid var(--stage-off-border);
+    }
+    .stage-chip.Offboarding::before { background: var(--stage-off); }
+
+    /* ─── Cards Grid ──────────────────────────────────── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .person-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.2rem;
+      box-shadow: 0 2px 10px rgba(120, 100, 180, 0.07);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .person-card:hover {
+      border-color: var(--border);
+      box-shadow: 0 4px 18px rgba(120, 100, 180, 0.12);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .card-jobtitle {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-top: 0.1rem;
+    }
+
+    .card-start {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 0.12rem;
+    }
+
+    .form-row select:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .card-btns {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── Progress ─────────────────────────────────────── */
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.55rem;
+    }
+
+    .tasks-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .tasks-right {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tasks-input {
+      width: 44px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.18rem 0.3rem;
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.12s;
+      -moz-appearance: textfield;
+    }
+    .tasks-input::-webkit-outer-spin-button,
+    .tasks-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .tasks-input:focus { border-color: var(--accent); }
+
+    .tasks-of {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+    }
+
+    .pct-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      min-width: 36px;
+      text-align: right;
+      color: var(--text-primary);
+    }
+
+    .bar-track {
+      height: 7px;
+      background: rgba(0, 0, 0, 0.07);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, #7bc4b8, #c49abd);
+      transition: width 0.25s ease;
+      min-width: 0;
+    }
+
+    /* ─── Empty State ─────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 5rem 2rem;
+      color: var(--text-muted);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    .empty-state h3 {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+
+    .empty-state p { font-size: 0.82rem; }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 700px) {
+      main { padding: 1.25rem; }
+      .summary-strip { grid-template-columns: repeat(2, 1fr); }
+      header { padding: 0 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Header ──────────────────────────────────────── -->
+  <header>
+    <div class="header-brand">
+      <span class="brand-mark">YourGP</span>
+      <div class="brand-divider"></div>
+      <div class="brand-titles">
+        <h1>SLIDE Dashboard</h1>
+        <p>Staff Lifecycle Induction &amp; Development Engine</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Add Person
+    </button>
+  </header>
+
+  <!-- ─── Main ─────────────────────────────────────────── -->
+  <main>
+
+    <!-- Summary -->
+    <div class="summary-strip" id="summary"></div>
+
+    <!-- Dashboard -->
+    <div class="dash-topbar">
+      <span class="dash-topbar-label">Staff by Department &amp; Stage</span>
+    </div>
+
+    <div id="dashboard"></div>
+
+  </main>
+
+  <!-- ─── Modal ────────────────────────────────────────── -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Person</h2>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="form-row">
+        <label for="f-name">Full Name</label>
+        <input type="text" id="f-name" placeholder="e.g. Dr. Jane Smith" autocomplete="off" />
+      </div>
+      <div class="form-row">
+        <label for="f-dept">Department</label>
+        <select id="f-dept" onchange="onDeptChange()">
+          <option value="">Select a department...</option>
+          <option value="Reception">Reception</option>
+          <option value="Business">Business</option>
+          <option value="Nursing">Nursing</option>
+          <option value="GP">GP</option>
+          <option value="Finance">Finance</option>
+          <option value="Projects &amp; Innovation">Projects &amp; Innovation</option>
+          <option value="PST">PST</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="f-title">Job Title</label>
+        <select id="f-title" disabled>
+          <option value="">Select department first...</option>
+        </select>
+      </div>
+      <div class="form-row" id="remote-row" style="display:none">
+        <label>Remote Staff?</label>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="f-remote" />
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Yes, this person works remotely</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="f-stage">Stage</label>
+        <select id="f-stage" onchange="onStageChange()">
+          <option value="">Select a stage...</option>
+          <option value="Onboarding">Onboarding</option>
+          <option value="Induction">Induction</option>
+          <option value="Offboarding">Offboarding</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="f-date" id="f-date-label">Start Date</label>
+        <input type="date" id="f-date" />
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePerson()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SVG Icons (reusable) ─────────────────────────── -->
+  <svg style="display:none">
+    <symbol id="ico-users" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </symbol>
+    <symbol id="ico-arrow-up" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 19V5M5 12l7-7 7 7"/>
+    </symbol>
+    <symbol id="ico-circle" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="ico-arrow-down" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </symbol>
+    <symbol id="ico-reception" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M8 12h8M8 16h5"/>
+    </symbol>
+    <symbol id="ico-manager" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </symbol>
+    <symbol id="ico-nurse" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M9 8h6M12 5v6"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>
+    </symbol>
+    <symbol id="ico-gp" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>
+      <path d="M15.5 17.5l-1.5 3-1.5-1.5-1.5 1.5L9.5 17.5"/>
+    </symbol>
+    <symbol id="ico-doctor" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="2" width="6" height="6" rx="1"/><path d="M4 20v-2a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v2"/>
+      <path d="M15 17h5M17.5 14.5v5"/>
+    </symbol>
+    <symbol id="ico-finance" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+    </symbol>
+    <symbol id="ico-innovation" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.8-1.6 5.1-4 6.3V17H9v-1.7C6.6 14.1 5 11.8 5 9a7 7 0 0 1 7-7z"/>
+    </symbol>
+    <symbol id="ico-pso" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+      <rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
+    </symbol>
+  </svg>
+
+  <script>
+    // ─── Department → Job Title mapping ───────────────────
+    const DEPT_JOB_TITLES = {
+      'Reception':             ['Medical Receptionist'],
+      'Business':              ['Site Manager'],
+      'Nursing':               ['Registered Nurse'],
+      'GP':                    ['GP', 'Registrar', 'JMO Doctor'],
+      'Finance':               ['Finance Manager', 'Senior Finance Executive', 'Junior Finance Executive'],
+      'Projects & Innovation': ['Head of Projects & Innovation', 'EA cum Project Support Officer', 'Product Manager'],
+      'PST':                   ['Practice Support Officer']
+    };
+
+    const DEPT_ORDER  = ['Reception', 'Business', 'Nursing', 'GP', 'Finance', 'Projects & Innovation', 'PST'];
+    const STAGE_ORDER = ['Onboarding', 'Induction', 'Offboarding'];
+    const REMOTE_DEPTS = ['Finance', 'Projects & Innovation'];
+
+    const DEPT_ICONS = {
+      'Reception':             'ico-reception',
+      'Business':              'ico-manager',
+      'Nursing':               'ico-nurse',
+      'GP':                    'ico-gp',
+      'Finance':               'ico-finance',
+      'Projects & Innovation': 'ico-innovation',
+      'PST':                   'ico-pso'
+    };
+
+    // ─── Migrate old data format (role → department + jobTitle) ─
+    const OLD_ROLE_MAP = {
+      'Reception':               { department: 'Reception',             jobTitle: 'Medical Receptionist' },
+      'Site Manager':            { department: 'Business',              jobTitle: 'Site Manager' },
+      'Nurse':                   { department: 'Nursing',               jobTitle: 'Registered Nurse' },
+      'GP/Registrar':            { department: 'GP',                    jobTitle: 'GP' },
+      'JMO Doctor':              { department: 'GP',                    jobTitle: 'JMO Doctor' },
+      'Finance Team':            { department: 'Finance',               jobTitle: 'Finance Manager' },
+      'Projects & Innovation':   { department: 'Projects & Innovation', jobTitle: 'Head of Projects & Innovation' },
+      'Practice Support Officer':{ department: 'PST',                   jobTitle: 'Practice Support Officer' }
+    };
+
+    // ─── State ─────────────────────────────────────────────
+    let staff  = JSON.parse(localStorage.getItem('slide_staff') || '[]');
+    let editId = null;
+
+    // Migrate any records using the old single 'role' field
+    staff = staff.map(p => {
+      if (!p.department && p.role) {
+        const m = OLD_ROLE_MAP[p.role] || { department: p.role, jobTitle: p.role };
+        const { role, ...rest } = p;
+        return { ...rest, department: m.department, jobTitle: m.jobTitle };
+      }
+      return p;
+    });
+
+    // ─── Persistence ───────────────────────────────────────
+    function persist() {
+      localStorage.setItem('slide_staff', JSON.stringify(staff));
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    // ─── Task total logic ──────────────────────────────────
+    // Offboarding = 26 for all departments.
+    // GP: JMO Doctor = 21, GP/Registrar = 40.
+    // Finance & Projects & Innovation: remote = 15, non-remote = 26.
+    function getTaskTotal(person) {
+      if (person.stage === 'Offboarding') return 26;
+      switch (person.department) {
+        case 'Reception': return 26;
+        case 'Business':  return 30;
+        case 'Nursing':   return 25;
+        case 'GP':        return person.jobTitle === 'JMO Doctor' ? 21 : 40;
+        case 'Finance':
+        case 'Projects & Innovation': return person.remote ? 15 : 26;
+        case 'PST':       return 26;
+        default:          return 26;
+      }
+    }
+
+    // ─── Stage change: update date field label ────────────
+    function onStageChange() {
+      const stage = document.getElementById('f-stage').value;
+      const label = document.getElementById('f-date-label');
+      label.textContent = stage ? stage + ' Start Date' : 'Start Date';
+    }
+
+    // ─── Department change: populate Job Title dropdown ────
+    function onDeptChange() {
+      const dept   = document.getElementById('f-dept').value;
+      const select = document.getElementById('f-title');
+      const remRow = document.getElementById('remote-row');
+
+      select.innerHTML = '';
+      if (!dept) {
+        select.innerHTML = '<option value="">Select department first...</option>';
+        select.disabled = true;
+      } else {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a job title...';
+        select.appendChild(placeholder);
+        (DEPT_JOB_TITLES[dept] || []).forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          select.appendChild(opt);
+        });
+        select.disabled = false;
+        if ((DEPT_JOB_TITLES[dept] || []).length === 1) {
+          select.value = DEPT_JOB_TITLES[dept][0];
+        }
+      }
+
+      if (REMOTE_DEPTS.includes(dept)) {
+        remRow.style.display = '';
+      } else {
+        remRow.style.display = 'none';
+        document.getElementById('f-remote').checked = false;
+      }
+    }
+
+    // ─── Modal ─────────────────────────────────────────────
+    function openModal(id = null) {
+      editId = id;
+      document.getElementById('modal-title').textContent = id ? 'Edit Person' : 'Add Person';
+
+      if (id) {
+        const p = staff.find(x => x.id === id);
+        document.getElementById('f-name').value     = p.name;
+        document.getElementById('f-dept').value     = p.department;
+        onDeptChange(); // populate job title options before setting value
+        document.getElementById('f-title').value    = p.jobTitle;
+        document.getElementById('f-stage').value    = p.stage;
+        document.getElementById('f-date').value     = p.startDate;
+        document.getElementById('f-remote').checked = !!p.remote;
+        onStageChange();
+      } else {
+        document.getElementById('f-name').value     = '';
+        document.getElementById('f-dept').value     = '';
+        document.getElementById('f-stage').value    = '';
+        document.getElementById('f-date').value     = '';
+        document.getElementById('f-remote').checked = false;
+        onDeptChange(); // reset job title dropdown + hide remote toggle
+        onStageChange(); // reset date label
+      }
+      document.getElementById('overlay').classList.add('open');
+      setTimeout(() => document.getElementById('f-name').focus(), 80);
+    }
+
+    function closeModal() {
+      document.getElementById('overlay').classList.remove('open');
+      editId = null;
+    }
+
+    // ─── Save / Delete ─────────────────────────────────────
+    function savePerson() {
+      const name       = document.getElementById('f-name').value.trim();
+      const department = document.getElementById('f-dept').value;
+      const jobTitle   = document.getElementById('f-title').value;
+      const stage      = document.getElementById('f-stage').value;
+      const startDate  = document.getElementById('f-date').value;
+      const remote     = REMOTE_DEPTS.includes(department)
+                           ? document.getElementById('f-remote').checked
+                           : false;
+
+      if (!name || !department || !jobTitle || !stage || !startDate) {
+        alert('Please fill in all fields before saving.');
+        return;
+      }
+
+      if (editId) {
+        const i = staff.findIndex(p => p.id === editId);
+        if (i !== -1) {
+          const updated = { ...staff[i], name, department, jobTitle, stage, startDate, remote };
+          updated.tasksCompleted = Math.min(updated.tasksCompleted, getTaskTotal(updated));
+          staff[i] = updated;
+        }
+      } else {
+        staff.push({
+          id: uid(), name, department, jobTitle, stage, startDate,
+          remote, tasksCompleted: 0, notes: ''
+        });
+      }
+
+      persist();
+      closeModal();
+      render();
+    }
+
+    function deletePerson(id) {
+      const person = staff.find(p => p.id === id);
+      if (!confirm(`Remove ${person ? person.name : 'this person'} from the dashboard?`)) return;
+      staff = staff.filter(p => p.id !== id);
+      persist();
+      render();
+    }
+
+    // ─── Inline task update (no full re-render) ────────────
+    function updateTasks(id, raw) {
+      const p = staff.find(x => x.id === id);
+      if (!p) return;
+      const max = getTaskTotal(p);
+      const val = Math.min(max, Math.max(0, parseInt(raw) || 0));
+      p.tasksCompleted = val;
+      persist();
+
+      const pct   = Math.round((val / max) * 100);
+      const barEl = document.getElementById('bar-' + id);
+      const pctEl = document.getElementById('pct-' + id);
+      if (barEl) barEl.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+    }
+
+    // ─── Notes ─────────────────────────────────────────────
+    function toggleNotes(id) {
+      const body = document.getElementById('notes-body-' + id);
+      if (!body) return;
+      const isOpen = body.classList.toggle('open');
+      if (isOpen) body.querySelector('textarea').focus();
+    }
+
+    function updateNotes(id, value) {
+      const p = staff.find(x => x.id === id);
+      if (!p) return;
+      p.notes = value;
+      persist();
+      // Update dot indicator without re-render
+      const dot = document.getElementById('notes-dot-' + id);
+      if (dot) dot.style.display = value.trim() ? '' : 'none';
+    }
+
+    // ─── Helpers ───────────────────────────────────────────
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function fmtDate(str) {
+      if (!str) return '';
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('en-AU', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+    }
+
+    // ─── Render Summary ────────────────────────────────────
+    function renderSummary() {
+      const counts = { Onboarding: 0, Induction: 0, Offboarding: 0 };
+      staff.forEach(p => { if (counts[p.stage] !== undefined) counts[p.stage]++; });
+
+      document.getElementById('summary').innerHTML = `
+        <div class="stat-card total">
+          <div class="stat-dot total"><svg><use href="#ico-users" stroke="inherit"/></svg></div>
+          <div class="stat-body">
+            <div class="stat-number">${staff.length}</div>
+            <div class="stat-label">Total Staff</div>
+          </div>
+        </div>
+        <div class="stat-card onboarding">
+          <div class="stat-dot onboarding"><svg><use href="#ico-arrow-up" stroke="inherit"/></svg></div>
+          <div class="stat-body">
+            <div class="stat-number">${counts.Onboarding}</div>
+            <div class="stat-label">Onboarding</div>
+          </div>
+        </div>
+        <div class="stat-card induction">
+          <div class="stat-dot induction"><svg><use href="#ico-circle" stroke="inherit"/></svg></div>
+          <div class="stat-body">
+            <div class="stat-number">${counts.Induction}</div>
+            <div class="stat-label">In Induction</div>
+          </div>
+        </div>
+        <div class="stat-card offboarding">
+          <div class="stat-dot offboarding"><svg><use href="#ico-arrow-down" stroke="inherit"/></svg></div>
+          <div class="stat-body">
+            <div class="stat-number">${counts.Offboarding}</div>
+            <div class="stat-label">Offboarding</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ─── Render Dashboard ──────────────────────────────────
+    function renderDashboard() {
+      const el = document.getElementById('dashboard');
+
+      if (staff.length === 0) {
+        el.innerHTML = `
+          <div class="empty-state">
+            <h3>No staff added yet</h3>
+            <p>Click <strong>+ Add Person</strong> to begin tracking onboarding, induction, and offboarding progress.</p>
+          </div>`;
+        return;
+      }
+
+      let html = '';
+
+      for (const dept of DEPT_ORDER) {
+        const deptStaff = staff.filter(p => p.department === dept);
+        if (deptStaff.length === 0) continue;
+
+        const iconId = DEPT_ICONS[dept] || 'ico-users';
+        html += `
+          <div class="role-section">
+            <div class="role-heading">
+              <div class="role-icon"><svg><use href="#${iconId}" stroke="inherit"/></svg></div>
+              <h2>${esc(dept)}</h2>
+              <span class="role-pill">${deptStaff.length} ${deptStaff.length === 1 ? 'person' : 'people'}</span>
+            </div>`;
+
+        for (const stage of STAGE_ORDER) {
+          const group = deptStaff.filter(p => p.stage === stage);
+          if (group.length === 0) continue;
+
+          html += `
+            <div class="stage-group">
+              <div class="stage-chip ${stage}">${stage}</div>
+              <div class="cards-grid">`;
+
+          for (const p of group) {
+            const total    = getTaskTotal(p);
+            const pct      = Math.round((p.tasksCompleted / total) * 100);
+            const hasNotes = !!(p.notes && p.notes.trim());
+            const remoteBadge = (REMOTE_DEPTS.includes(p.department) && p.remote)
+              ? `<span class="remote-badge">Remote</span>`
+              : '';
+
+            html += `
+              <div class="person-card">
+                <div class="card-top">
+                  <div>
+                    <div class="card-name">${esc(p.name)}${remoteBadge}</div>
+                    <div class="card-jobtitle">${esc(p.jobTitle)}</div>
+                    <div class="card-start">Started ${fmtDate(p.startDate)}</div>
+                  </div>
+                  <div class="card-btns">
+                    <button class="btn btn-ghost-edit" onclick="openModal('${p.id}')">Edit</button>
+                    <button class="btn btn-ghost-delete" onclick="deletePerson('${p.id}')">Delete</button>
+                  </div>
+                </div>
+                <div class="progress-row">
+                  <span class="tasks-label">Tasks completed</span>
+                  <div class="tasks-right">
+                    <input
+                      type="number"
+                      class="tasks-input"
+                      id="input-${p.id}"
+                      value="${p.tasksCompleted}"
+                      min="0"
+                      max="${total}"
+                      oninput="updateTasks('${p.id}', this.value)"
+                      onchange="updateTasks('${p.id}', this.value)"
+                    />
+                    <span class="tasks-of">/ ${total}</span>
+                    <span class="pct-badge" id="pct-${p.id}">${pct}%</span>
+                  </div>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" id="bar-${p.id}" style="width:${pct}%"></div>
+                </div>
+                <div class="notes-section">
+                  <button class="notes-toggle" onclick="toggleNotes('${p.id}')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Notes
+                    <span class="notes-dot" id="notes-dot-${p.id}" style="${hasNotes ? '' : 'display:none'}"></span>
+                  </button>
+                  <div class="notes-body ${hasNotes ? 'open' : ''}" id="notes-body-${p.id}">
+                    <textarea
+                      class="notes-textarea"
+                      placeholder="Survey scores, who's helping, contextual progress..."
+                      oninput="updateNotes('${p.id}', this.value)"
+                    >${esc(p.notes || '')}</textarea>
+                  </div>
+                </div>
+              </div>`;
+          }
+
+          html += `</div></div>`; // close cards-grid, stage-group
+        }
+
+        html += `</div>`; // close role-section
+      }
+
+      el.innerHTML = html;
+    }
+
+    // ─── Full render ───────────────────────────────────────
+    function render() {
+      renderSummary();
+      renderDashboard();
+    }
+
+    // ─── Close overlay on backdrop click ───────────────────
+    document.getElementById('overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ─── Keyboard shortcuts ────────────────────────────────
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ─── Init ──────────────────────────────────────────────
+    render();
+  </script>
+</body>
+</html>
